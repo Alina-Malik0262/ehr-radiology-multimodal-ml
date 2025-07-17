@@ -1,6 +1,7 @@
 import os
 import gzip
 import shutil
+import pyspark.sql.functions as F
 
 def find_file(filename, base_dir=None):
     """
@@ -27,6 +28,8 @@ def get_output_path(directory, filename):
     os.makedirs(directory, exist_ok=True)
     return os.path.join(directory, filename)
 
+def cast_to_date(df, col_name, new_col_name):
+    return df.withColumn(new_col_name, F.col(col_name).cast("date"))
 
 
 def write_single_csv(df, output_dir, output_filename):

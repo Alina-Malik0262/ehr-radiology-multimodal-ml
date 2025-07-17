@@ -60,6 +60,20 @@ class TestAdmissionsPreprocessor(unittest.TestCase):
         flagged_rows_3 = df_flagged.filter(df_flagged.subject_id == 3).orderBy("admittime").collect()
         self.assertEqual(flagged_rows_3[0]["readmitted_30d"], 0)  # 2 months apart no readmit flag for subject 3
 
+    def test_cast_dates(self):
+        data = [
+            ("2180-05-06 22:23:00", "2180-05-07 22:23:00"),
+            ("2102-07-20 22:30:00", "2102-07-25 08:15:00")
+        ]
+        columns = ["admittime", "dischtime"]
+        self.df = self.spark.createDataFrame(data, columns)
+        result_df = self.preprocessor.cast_dates(self.df)
+        result = result_df.select("admitdate", "dischdate").collect()
+
+        assert result[0]["admitdate"].strftime('%Y-%m-%d') == "2180-05-06"
+        assert result[0]["dischdate"].strftime('%Y-%m-%d') == "2180-05-07"
+        assert result[1]["admitdate"].strftime('%Y-%m-%d') == "2102-07-20"
+        assert result[1]["dischdate"].strftime('%Y-%m-%d') == "2102-07-25"
 
 def test_preprocess(self):
         # Save sample data to a temporary CSV for read_data test

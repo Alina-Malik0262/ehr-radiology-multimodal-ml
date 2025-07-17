@@ -1,5 +1,6 @@
 import pyspark.sql.functions as F
 from pyspark.sql import Window
+from src.utils.util import cast_to_date
 
 class AdmissionsPreprocessor:
     def __init__(self, spark=None):
@@ -23,6 +24,11 @@ class AdmissionsPreprocessor:
         # Keep only the relevant columns needed for readmission logic
         return df.select("subject_id", "hadm_id", "admittime", "dischtime")
 
+    def cast_dates(self, df):
+        df = cast_to_date(df, "admittime","admitdate")
+        df = cast_to_date(df, "dischtime","dischdate")
+        return df
+
     def add_readmission_flag(self, df):
         # Define a window to look at each patient's admissions in order of time
         window = Window.partitionBy("subject_id").orderBy("admittime")
@@ -45,6 +51,7 @@ class AdmissionsPreprocessor:
         df = self.drop_duplicates(df)
         df = self.drop_missing(df)
         df = self.select_columns(df)
+        df = self.cast_dates(df)
         df = self.add_readmission_flag(df)
 
         return df, self.spark
